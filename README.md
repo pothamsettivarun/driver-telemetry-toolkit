@@ -35,7 +35,7 @@ The checked-in case study compares the quickest completed lap from two Cadillac 
 
 | Sample | Source lap | Official lap time | Difference |
 |---|---:|---:|---:|
-| Author | 11 | 1:34.491 | −0.196 s |
+| Author | 11 | 1:34.491 | -0.196 s |
 | Reference | 9 | 1:34.687 | baseline |
 
 In these particular logs, the Author lap is 0.196 s quicker. “Reference” describes the comparison role, not an assumption that this recorded lap is faster.
