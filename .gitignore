@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.idea/
+.vscode/
+.DS_Store
+
+# Raw telemetry is intentionally excluded. Only the two reviewed,
+# anonymized, single-lap examples below are publishable.
+*.ld
+!examples/data/author_fastest_lap.ld
+!examples/data/reference_fastest_lap.ld
+*.ibt
+
+# Local packaging output
+build/
+dist/
+*.spec
+

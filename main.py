@@ -40,12 +40,10 @@ def load_ld_core(filepath: str) -> Tuple[ldData, Dict[str, List[float]]]:
       - ldData object
       - data dict with core channels as Python lists:
         time, speed, throttle, brake, lap, lap_number (opt),
-        lap_delta_opt (opt), lap_dist_pct (opt), lap_dist (opt),
-        lat_acc (opt)
+        lap_delta_opt (opt), last/best lap timing channels (opt),
+        lap_dist_pct (opt), lap_dist (opt), lat_acc (opt)
     """
     l = ldData.fromfile(filepath)
-    all_names = list(l)
-
     def chan(name):
         return l[name].data.tolist()
 
@@ -68,6 +66,15 @@ def load_ld_core(filepath: str) -> Tuple[ldData, Dict[str, List[float]]]:
     lap_delta_opt_name = _pick_channel(
         l, ["LapDeltaToSessionOptimalLap"], "LapDeltaToSessionOptimalLap",
         required=False
+    )
+    lap_last_time_name = _pick_channel(
+        l, ["LapLastLapTime"], "LapLastLapTime", required=False
+    )
+    lap_best_lap_name = _pick_channel(
+        l, ["LapBestLap"], "LapBestLap", required=False
+    )
+    lap_best_time_name = _pick_channel(
+        l, ["LapBestLapTime"], "LapBestLapTime", required=False
     )
 
     # Distance
@@ -96,6 +103,12 @@ def load_ld_core(filepath: str) -> Tuple[ldData, Dict[str, List[float]]]:
         print(f"  Lap Number:       {lap_number_name}")
     if lap_delta_opt_name:
         print(f"  Lap Δ vs Optimal: {lap_delta_opt_name}")
+    if lap_last_time_name:
+        print(f"  Last Lap Time:    {lap_last_time_name}")
+    if lap_best_lap_name:
+        print(f"  Best Lap Number:  {lap_best_lap_name}")
+    if lap_best_time_name:
+        print(f"  Best Lap Time:    {lap_best_time_name}")
     if lap_dist_pct_name:
         print(f"  LapDistPct:       {lap_dist_pct_name}")
     if lap_dist_name:
@@ -115,6 +128,12 @@ def load_ld_core(filepath: str) -> Tuple[ldData, Dict[str, List[float]]]:
         data["lap_number"] = chan(lap_number_name)
     if lap_delta_opt_name:
         data["lap_delta_opt"] = chan(lap_delta_opt_name)
+    if lap_last_time_name:
+        data["lap_last_time"] = chan(lap_last_time_name)
+    if lap_best_lap_name:
+        data["lap_best_lap"] = chan(lap_best_lap_name)
+    if lap_best_time_name:
+        data["lap_best_time"] = chan(lap_best_time_name)
     if lap_dist_pct_name:
         data["lap_dist_pct"] = chan(lap_dist_pct_name)
     if lap_dist_name:
@@ -250,38 +269,68 @@ def compute_metrics(data: Dict[str, List[float]]) -> Dict[str, Any]:
 # ============================================================
 
 def compute_lap_summaries(data: Dict[str, List[float]]):
-    """
-    Build lap list with:
-      lap_num, lap_time, delta_opt, start_idx, end_idx, delta_to_best
-    Best lap is chosen ignoring the final lap of the stint.
+    """Return detected laps, the fastest completed lap, and optimal time.
+
+    Mu logs commonly begin or end partway through a lap. When ``LapDistPct``
+    is available, a lap is considered complete only when its samples cover
+    essentially the full 0-100% distance range. If iRacing's reported
+    ``LapBestLap`` and ``LapBestLapTime`` channels are available, their final
+    valid values identify and time the session's official fastest lap. Other
+    laps use ``LapLastLapTime`` when possible and sample boundaries otherwise.
     """
     time = data["time"]
     lap_vals = data["lap"]
     lap_number_vals = data.get("lap_number")
     lap_delta_opt = data.get("lap_delta_opt")
+    lap_last_time = data.get("lap_last_time")
+    lap_best_lap = data.get("lap_best_lap")
+    lap_best_time = data.get("lap_best_time")
+    lap_dist_pct = data.get("lap_dist_pct")
 
     n = len(time)
     if n == 0:
-        return [], None
+        return [], None, None
+    if len(lap_vals) != n:
+        raise ValueError("Time and lap channels have different sample counts.")
 
-    segments = {}
-    current_lap = int(round(lap_vals[0]))
-    start_idx = 0
+    segment_starts = [0]
     for i in range(1, n):
-        lap_i = int(round(lap_vals[i]))
-        if lap_i != current_lap:
-            segments[current_lap] = (start_idx, i - 1)
-            current_lap = lap_i
-            start_idx = i
-    segments[current_lap] = (start_idx, n - 1)
+        if int(round(lap_vals[i])) != int(round(lap_vals[i - 1])):
+            segment_starts.append(i)
+    segment_starts.append(n)
 
     laps = []
-    for lap_key in sorted(segments.keys()):
-        start, end = segments[lap_key]
+    for segment_index in range(len(segment_starts) - 1):
+        start = segment_starts[segment_index]
+        stop = segment_starts[segment_index + 1]
+        end = stop - 1
         if end <= start:
             continue
 
-        lap_time = time[end] - time[start]
+        lap_key = int(round(lap_vals[start]))
+        is_complete = start > 0 and stop < n
+        if lap_dist_pct is not None:
+            pct = np.asarray(lap_dist_pct[start:stop], dtype=float)
+            pct = pct[np.isfinite(pct)]
+            if pct.size:
+                scale = 1.0 if float(np.max(pct)) <= 1.5 else 100.0
+                is_complete = (
+                    float(np.min(pct)) <= 0.01 * scale
+                    and float(np.max(pct)) >= 0.99 * scale
+                    and float(np.ptp(pct)) >= 0.98 * scale
+                )
+
+        # A lap transition occurs at ``stop``. Mu/iRacing updates
+        # LapLastLapTime shortly *after* that crossing, so use the final value
+        # in the following lap segment instead of the value at the boundary.
+        boundary_time = time[stop] if stop < n else time[end]
+        lap_time = float(boundary_time - time[start])
+        following_segment = segment_index + 2
+        if lap_last_time is not None and following_segment < len(segment_starts):
+            report_idx = segment_starts[following_segment] - 1
+            reported_time = float(lap_last_time[report_idx])
+            if np.isfinite(reported_time) and reported_time > 0:
+                lap_time = reported_time
         if lap_time <= 0:
             continue
 
@@ -300,23 +349,39 @@ def compute_lap_summaries(data: Dict[str, List[float]]):
             "delta_opt": delta_opt,
             "start_idx": start,
             "end_idx": end,
+            "is_incomplete": not is_complete,
         })
 
     if not laps:
-        return [], None
+        return [], None, None
 
-    last_lap_num = max(l["lap_num"] for l in laps)
+    reported_best_num = None
+    reported_best_seconds = None
+    if lap_best_lap is not None and lap_best_time is not None:
+        for num, seconds in reversed(list(zip(lap_best_lap, lap_best_time))):
+            num = float(num)
+            seconds = float(seconds)
+            if np.isfinite(num) and np.isfinite(seconds) and num >= 0 and seconds > 0:
+                reported_best_num = int(round(num))
+                reported_best_seconds = seconds
+                break
 
-    # Best lap chosen ignoring the final lap of the stint
-    candidates = [l for l in laps if l["lap_num"] != last_lap_num]
+    reported_best = None
+    if reported_best_num is not None:
+        for lap in laps:
+            if lap["lap_num"] == reported_best_num and not lap["is_incomplete"]:
+                lap["lap_time"] = reported_best_seconds
+                reported_best = lap
+                break
+
+    candidates = [lap for lap in laps if not lap["is_incomplete"]]
     if not candidates:
         candidates = laps
 
-    best = min(candidates, key=lambda x: x["lap_time"])
+    best = reported_best or min(candidates, key=lambda x: x["lap_time"])
     best_time = best["lap_time"]
 
     for lap in laps:
-        lap["is_incomplete"] = (lap["lap_num"] == last_lap_num)
         if lap["is_incomplete"]:
             lap["delta_to_best"] = None
         else:
@@ -353,11 +418,6 @@ def format_laptime(sec: float) -> str:
     return f"{m}:{s:06.3f}"
 
 def print_lap_table(laps, best_lap_num, optimal_time=None):
-    if optimal_time is not None:
-        opt_str = format_laptime(optimal_time)
-        print(f"\n  OPT  {opt_str:>9}  {'  N/A ':>7}  {'+0.000':>7}")
-        print(" --------------------------------")
-
     if not laps:
         print("No laps found.")
         return
@@ -365,6 +425,10 @@ def print_lap_table(laps, best_lap_num, optimal_time=None):
     print("Lap summary (best lap marked with '*'):")
     print("  Lap    Time      ΔBest    ΔOpt")
     print(" --------------------------------")
+
+    if optimal_time is not None:
+        opt_str = format_laptime(optimal_time)
+        print(f"  OPT  {opt_str:>9}  {'N/A':>7}  {'+0.000':>7}")
 
     for lap in laps:
         lap_num = lap["lap_num"]
@@ -434,7 +498,7 @@ def build_profile_for_lap(data: Dict[str, List[float]], start: int, end: int):
         "lap_length_m": lap_length_m,
     }
 
-def resample_profiles(me, ref, n_grid: int = 400):
+def resample_profiles(me, ref, n_grid: int = 2000):
     d_grid = np.linspace(0.0, 1.0, num=n_grid)
 
     def interp_profile(p):
@@ -509,7 +573,7 @@ def build_segments_from_manual(
     - Straights: fill gaps between corners
     Naming:
       * Straights between Turn i and Turn i+1: Str i-(i+1)
-      * Final straight from last corner end to lap end: Str 0-1
+      * Final straight from the last turn back to Turn 1: Str N-1
     """
     n_grid = len(d_grid)
     if n_grid == 0:
@@ -520,16 +584,7 @@ def build_segments_from_manual(
 
     segments = []
     prev_end_m = 0.0
-    straight_idx = 0
-    last_turn_num = 0
-
-    def dist_to_idx(dist_m: float) -> int:
-        # map physical meters -> normalized -> index in d_grid
-        d_norm = dist_m / lap_length_m
-        # clamp
-        d_norm = max(0.0, min(1.0, d_norm))
-        # left/right depending on use later
-        return int(np.searchsorted(d_grid, d_norm, side="left"))
+    previous_turn_num = None
 
     for t in turns_sorted:
         turn_num = t["turn"]
@@ -543,13 +598,11 @@ def build_segments_from_manual(
             s_idx = int(np.searchsorted(d_grid, s_norm, side="left"))
             e_idx = int(np.searchsorted(d_grid, e_norm, side="right") - 1)
             if e_idx > s_idx:
-                if straight_idx == 0:
-                    # first straight before Turn 1 – label however you like
+                if previous_turn_num is None:
                     name = "Str pre-1"
                 else:
-                    name = f"Str {straight_idx}-{straight_idx+1}"
+                    name = f"Str {previous_turn_num}-{turn_num}"
                 segments.append({"name": name, "start": s_idx, "end": e_idx})
-                straight_idx += 1
 
         # The turn itself
         s_norm = start_m / lap_length_m
@@ -564,7 +617,7 @@ def build_segments_from_manual(
             })
 
         prev_end_m = end_m
-        last_turn_num = turn_num
+        previous_turn_num = turn_num
 
     # Final straight: from end of last corner to end of lap
     if prev_end_m < lap_length_m:
@@ -572,9 +625,8 @@ def build_segments_from_manual(
         s_idx = int(np.searchsorted(d_grid, s_norm, side="left"))
         e_idx = n_grid - 1
         if e_idx > s_idx:
-            # per your note: straight from end of final corner = Str 0-1
             segments.append({
-                "name": "Str 0-1",
+                "name": f"Str {previous_turn_num}-1",
                 "start": s_idx,
                 "end": e_idx,
             })
@@ -654,7 +706,10 @@ def print_segment_details(segments: List[Dict[str, Any]]):
         dt = seg["delta"]
         print(f"\n{name}")
         print(f"     Δtime (s): {dt:+.3f}")
-        print(f"     Speed:     you {seg['speed_me']:.1f}, ref {seg['speed_ref']:.1f}")
+        print(
+            f"     Speed (km/h): you {seg['speed_me'] * 3.6:.1f}, "
+            f"ref {seg['speed_ref'] * 3.6:.1f}"
+        )
         print(f"     Throttle:  you {seg['thr_me']:.1f}%, ref {seg['thr_ref']:.1f}%")
         print(f"     Brake:     you {seg['br_me']:.1f}%, ref {seg['br_ref']:.1f}%")
 
@@ -820,8 +875,8 @@ def main():
             print(f"Samples:              {metrics['sample_count']}")
             print(f"Average throttle (%): {metrics['avg_throttle']:.1f}")
             print(f"Average brake (%):    {metrics['avg_brake']:.1f}")
-            print(f"Max speed:            {metrics['max_speed']:.1f}")
-            print(f"Min speed:            {metrics['min_speed']:.1f}")
+            print(f"Max speed (km/h):     {metrics['max_speed'] * 3.6:.1f}")
+            print(f"Min speed (km/h):     {metrics['min_speed'] * 3.6:.1f}")
             print(f"Throttle variability: {metrics['throttle_variability']:.1f}")
             print(f"Throttle mid-range:   {metrics['throttle_mid_fraction'] * 100:.1f}% of samples in 20–80%")
             print(f"Brake spikes:         {metrics['brake_spike_count']}")
@@ -847,7 +902,7 @@ def main():
 
         elif choice == "3":
             if ref_data is None or ref_laps is None:
-                print("No reference telemetry loaded. Choose option 3 first.")
+                print("No reference telemetry loaded. Choose option 2 first.")
                 continue
             if not laps:
                 print("No laps in your main file.")
@@ -894,7 +949,7 @@ def main():
             t_me, s_me, th_me, br_me, lat_me = profs["me"]
             t_ref, s_ref, th_ref, br_ref, lat_ref = profs["ref"]
 
-            total_delta = t_me[-1] - t_ref[-1]
+            total_delta = my_lap["lap_time"] - ref_lap["lap_time"]
 
             # Try to load segmentation for this track once
             if manual_turns is None:
@@ -936,6 +991,10 @@ def main():
                 br_me, br_ref,
             )
 
+            if not segs:
+                print("No valid comparison segments were found.")
+                continue
+
             loss_seg = max(segs, key=lambda s: s["delta"])
             gain_seg = min(segs, key=lambda s: s["delta"])
 
@@ -954,13 +1013,19 @@ def main():
             # Biggest loss/gain FROM SEGMENTS
             print("\nBiggest time loss point:")
             print(f"     At {loss_seg['name']} you lose {loss_seg['delta']:+.3f} s.")
-            print(f"     Speed:    you {loss_seg['speed_me']:.1f}, ref {loss_seg['speed_ref']:.1f}")
+            print(
+                f"     Speed (km/h): you {loss_seg['speed_me'] * 3.6:.1f}, "
+                f"ref {loss_seg['speed_ref'] * 3.6:.1f}"
+            )
             print(f"     Throttle: you {loss_seg['thr_me']:.1f}%, ref {loss_seg['thr_ref']:.1f}%")
             print(f"     Brake:    you {loss_seg['br_me']:.1f}%, ref {loss_seg['br_ref']:.1f}%")
 
             print("\nBiggest time gain point:")
             print(f"     At {gain_seg['name']} you gain {gain_seg['delta']:+.3f} s.")
-            print(f"     Speed:    you {gain_seg['speed_me']:.1f}, ref {gain_seg['speed_ref']:.1f}")
+            print(
+                f"     Speed (km/h): you {gain_seg['speed_me'] * 3.6:.1f}, "
+                f"ref {gain_seg['speed_ref'] * 3.6:.1f}"
+            )
             print(f"     Throttle: you {gain_seg['thr_me']:.1f}%, ref {gain_seg['thr_ref']:.1f}%")
             print(f"     Brake:    you {gain_seg['br_me']:.1f}%, ref {gain_seg['br_ref']:.1f}%")
 
@@ -970,7 +1035,7 @@ def main():
                 print_segment_details(segs)
 
         else:
-            print("Invalid choice. Please enter 0, 1, 3, or 4.")
+            print("Invalid choice. Please enter 0, 1, 2, or 3.")
 
 if __name__ == "__main__":
     main()

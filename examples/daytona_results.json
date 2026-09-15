@@ -1,0 +1,168 @@
+{
+  "comparison_sign_convention": "positive means Author slower than Reference",
+  "author_fastest_lap_s": 94.49140167236328,
+  "reference_fastest_lap_s": 94.68710327148438,
+  "author_minus_reference_s": -0.19570159912109375,
+  "manual_segments": [
+    {
+      "name": "Str pre-1",
+      "delta_s": -0.06647898725416024,
+      "author_average_speed_kmh": 301.8614297103568,
+      "reference_average_speed_kmh": 299.05330095389786,
+      "author_average_throttle_pct": 70.62574548755379,
+      "reference_average_throttle_pct": 69.67632679719846,
+      "author_average_brake_pct": 20.0278589346919,
+      "reference_average_brake_pct": 23.78603592173712
+    },
+    {
+      "name": "Turn 1",
+      "delta_s": -0.0030999725300375758,
+      "author_average_speed_kmh": 144.7901678969005,
+      "reference_average_speed_kmh": 145.1131648008162,
+      "author_average_throttle_pct": 35.464102493724134,
+      "reference_average_throttle_pct": 43.63798852907089,
+      "author_average_brake_pct": 7.112129517310651,
+      "reference_average_brake_pct": 9.042235816285872
+    },
+    {
+      "name": "Str 1-2",
+      "delta_s": 0.025241155052491138,
+      "author_average_speed_kmh": 188.7835470405864,
+      "reference_average_speed_kmh": 190.60698589297084,
+      "author_average_throttle_pct": 100.0,
+      "reference_average_throttle_pct": 94.43655584282237,
+      "author_average_brake_pct": 0.0,
+      "reference_average_brake_pct": 0.11150090438517446
+    },
+    {
+      "name": "Turn 2",
+      "delta_s": -0.010817029260843825,
+      "author_average_speed_kmh": 216.08445916700515,
+      "reference_average_speed_kmh": 212.00349517534946,
+      "author_average_throttle_pct": 100.0,
+      "reference_average_throttle_pct": 87.30370088082172,
+      "author_average_brake_pct": 0.0,
+      "reference_average_brake_pct": 0.7660207922657812
+    },
+    {
+      "name": "Str 2-3",
+      "delta_s": -0.18271457779212952,
+      "author_average_speed_kmh": 201.83363021802978,
+      "reference_average_speed_kmh": 188.73124536568542,
+      "author_average_throttle_pct": 48.18545022016723,
+      "reference_average_throttle_pct": 27.02300847413253,
+      "author_average_brake_pct": 27.19918974044574,
+      "reference_average_brake_pct": 24.90706556880477
+    },
+    {
+      "name": "Turn 3",
+      "delta_s": -0.2697891606451428,
+      "author_average_speed_kmh": 101.42185835470184,
+      "reference_average_speed_kmh": 98.55342822884849,
+      "author_average_throttle_pct": 46.751294344189645,
+      "reference_average_throttle_pct": 47.93388244049915,
+      "author_average_brake_pct": 1.6454647754966094,
+      "reference_average_brake_pct": 6.331887444795984
+    },
+    {
+      "name": "Str 3-4",
+      "delta_s": 0.0002518861543450157,
+      "author_average_speed_kmh": 217.09948841767556,
+      "reference_average_speed_kmh": 216.60216676563803,
+      "author_average_throttle_pct": 78.91295484117245,
+      "reference_average_throttle_pct": 76.86288519140534,
+      "author_average_brake_pct": 9.323014123420181,
+      "reference_average_brake_pct": 10.761083189056903
+    },
+    {
+      "name": "Turn 4",
+      "delta_s": 0.039030509514851985,
+      "author_average_speed_kmh": 119.75620919723478,
+      "reference_average_speed_kmh": 120.561392334075,
+      "author_average_throttle_pct": 63.26403603533675,
+      "reference_average_throttle_pct": 69.02307825502142,
+      "author_average_brake_pct": 0.0,
+      "reference_average_brake_pct": 1.3111197076613526
+    },
+    {
+      "name": "Str 4-5",
+      "delta_s": 0.04767082364870845,
+      "author_average_speed_kmh": 176.01651644875793,
+      "reference_average_speed_kmh": 176.355328695907,
+      "author_average_throttle_pct": 56.32137073888171,
+      "reference_average_throttle_pct": 57.52445393187792,
+      "author_average_brake_pct": 15.632343412775853,
+      "reference_average_brake_pct": 18.07187904016853
+    },
+    {
+      "name": "Turn 5",
+      "delta_s": -0.06536554999552635,
+      "author_average_speed_kmh": 163.28972023616055,
+      "reference_average_speed_kmh": 161.9172701812107,
+      "author_average_throttle_pct": 83.47106303084999,
+      "reference_average_throttle_pct": 89.1248333732263,
+      "author_average_brake_pct": 0.0,
+      "reference_average_brake_pct": 0.5863326208913191
+    },
+    {
+      "name": "Str 5-6",
+      "delta_s": 0.07053124989592874,
+      "author_average_speed_kmh": 284.7281057962891,
+      "reference_average_speed_kmh": 286.3718351966549,
+      "author_average_throttle_pct": 91.48806183898752,
+      "reference_average_throttle_pct": 91.40611957046798,
+      "author_average_brake_pct": 4.257057588034904,
+      "reference_average_brake_pct": 5.335612347567375
+    },
+    {
+      "name": "Turn 6",
+      "delta_s": -0.05560950398678699,
+      "author_average_speed_kmh": 182.55981682833288,
+      "reference_average_speed_kmh": 178.81750747386025,
+      "author_average_throttle_pct": 2.027027027027027,
+      "reference_average_throttle_pct": 8.011031134576307,
+      "author_average_brake_pct": 4.217325520793462,
+      "reference_average_brake_pct": 12.932921265720523
+    },
+    {
+      "name": "Turn 7",
+      "delta_s": 0.010991201723271615,
+      "author_average_speed_kmh": 164.84642949203936,
+      "reference_average_speed_kmh": 165.94047293136134,
+      "author_average_throttle_pct": 76.69922622376623,
+      "reference_average_throttle_pct": 81.02183450887627,
+      "author_average_brake_pct": 0.0,
+      "reference_average_brake_pct": 0.45608439890097985
+    },
+    {
+      "name": "Str 7-8",
+      "delta_s": 0.018727824134344928,
+      "author_average_speed_kmh": 182.30222603762505,
+      "reference_average_speed_kmh": 188.1352356548912,
+      "author_average_throttle_pct": 100.0,
+      "reference_average_throttle_pct": 100.0,
+      "author_average_brake_pct": 0.0,
+      "reference_average_brake_pct": 0.0
+    },
+    {
+      "name": "Turn 8",
+      "delta_s": 0.024672157484587842,
+      "author_average_speed_kmh": 202.62692049085436,
+      "reference_average_speed_kmh": 207.754276670364,
+      "author_average_throttle_pct": 100.0,
+      "reference_average_throttle_pct": 100.0,
+      "author_average_brake_pct": 0.0,
+      "reference_average_brake_pct": 0.0
+    },
+    {
+      "name": "Str 8-1",
+      "delta_s": 0.2119577943341966,
+      "author_average_speed_kmh": 291.1016347987809,
+      "reference_average_speed_kmh": 294.1838235516494,
+      "author_average_throttle_pct": 100.0,
+      "reference_average_throttle_pct": 100.0,
+      "author_average_brake_pct": 0.0,
+      "reference_average_brake_pct": 0.0
+    }
+  ]
+}
