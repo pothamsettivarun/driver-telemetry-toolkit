@@ -18,6 +18,17 @@ Raw telemetry makes it easy to see that two laps differ, but harder to identify 
 - reports time, speed, throttle, and brake differences through manual track segments; and
 - offers both a terminal workflow and a Tkinter desktop GUI.
 
+## Desktop interface
+
+The GUI supports full-stint review, reference-lap selection, saved track segmentation, and segment-by-segment comparison. These screenshots show a separate full-session demonstration; the reproducible Daytona example below uses the anonymized sample files. Driver names and local file paths are intentionally redacted. Click either image for the full-resolution view.
+
+<p align="center">
+  <a href="docs/images/gui-stint-overview.png"><img src="docs/images/gui-stint-overview.png" width="49%" alt="Driver Telemetry Toolkit whole-stint GUI"></a>
+  <a href="docs/images/gui-lap-comparison.png"><img src="docs/images/gui-lap-comparison.png" width="49%" alt="Driver Telemetry Toolkit lap-comparison GUI"></a>
+</p>
+
+<p align="center"><sub>Whole-stint summary (left) · lap-comparison output (right)</sub></p>
+
 ## Daytona example
 
 The checked-in case study compares the quickest completed lap from two Cadillac V-Series.R GTP sessions at the Daytona road course. The car, track, and setup were the same; the sessions and conditions were not identical.
