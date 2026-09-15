@@ -428,8 +428,8 @@ class App(tk.Tk):
         txt.append(f"Samples:              {m['sample_count']}")
         txt.append(f"Average throttle (%): {m['avg_throttle']:.1f}")
         txt.append(f"Average brake (%):    {m['avg_brake']:.1f}")
-        txt.append(f"Max speed:            {m['max_speed']:.1f}")
-        txt.append(f"Min speed:            {m['min_speed']:.1f}")
+        txt.append(f"Max speed (km/h):     {m['max_speed'] * 3.6:.1f}")
+        txt.append(f"Min speed (km/h):     {m['min_speed'] * 3.6:.1f}")
         txt.append(f"Throttle variability: {m['throttle_variability']:.1f}")
         txt.append(f"Throttle mid-range:   {m['throttle_mid_fraction'] * 100:.1f}% of samples in 20–80%")
         txt.append(f"Brake spikes:         {m['brake_spike_count']}")
@@ -456,8 +456,8 @@ class App(tk.Tk):
         txt.append(f"Samples:              {m['sample_count']}")
         txt.append(f"Average throttle (%): {m['avg_throttle']:.1f}")
         txt.append(f"Average brake (%):    {m['avg_brake']:.1f}")
-        txt.append(f"Max speed:            {m['max_speed']:.1f}")
-        txt.append(f"Min speed:            {m['min_speed']:.1f}")
+        txt.append(f"Max speed (km/h):     {m['max_speed'] * 3.6:.1f}")
+        txt.append(f"Min speed (km/h):     {m['min_speed'] * 3.6:.1f}")
         txt.append(f"Throttle variability: {m['throttle_variability']:.1f}")
         txt.append(f"Throttle mid-range:   {m['throttle_mid_fraction'] * 100:.1f}% of samples in 20–80%")
         txt.append(f"Brake spikes:         {m['brake_spike_count']}")
@@ -573,7 +573,11 @@ class App(tk.Tk):
         segs = segment_deltas_manual(d_grid, delta_t, t_me, t_ref, my_prof["lap_length_m"], self.manual_turns)
         segs = enrich_segments_with_stats(segs, s_me, s_ref, th_me, th_ref, br_me, br_ref)
 
-        total_delta = t_me[-1] - t_ref[-1]
+        if not segs:
+            messagebox.showerror("Compare", "No valid comparison segments were found.")
+            return
+
+        total_delta = my_lap["lap_time"] - ref_lap["lap_time"]
         loss_seg = max(segs, key=lambda s: s["delta"])
         gain_seg = min(segs, key=lambda s: s["delta"])
 
@@ -592,14 +596,20 @@ class App(tk.Tk):
         out.append("")
         out.append("Biggest time loss point:")
         out.append(f"     At {loss_seg['name']} you lose {loss_seg['delta']:+.3f} s.")
-        out.append(f"     Speed:    you {loss_seg['speed_me']:.1f}, ref {loss_seg['speed_ref']:.1f}")
+        out.append(
+            f"     Speed (km/h): you {loss_seg['speed_me'] * 3.6:.1f}, "
+            f"ref {loss_seg['speed_ref'] * 3.6:.1f}"
+        )
         out.append(f"     Throttle: you {loss_seg['thr_me']:.1f}%, ref {loss_seg['thr_ref']:.1f}%")
         out.append(f"     Brake:    you {loss_seg['br_me']:.1f}%, ref {loss_seg['br_ref']:.1f}%")
 
         out.append("")
         out.append("Biggest time gain point:")
         out.append(f"     At {gain_seg['name']} you gain {gain_seg['delta']:+.3f} s.")
-        out.append(f"     Speed:    you {gain_seg['speed_me']:.1f}, ref {gain_seg['speed_ref']:.1f}")
+        out.append(
+            f"     Speed (km/h): you {gain_seg['speed_me'] * 3.6:.1f}, "
+            f"ref {gain_seg['speed_ref'] * 3.6:.1f}"
+        )
         out.append(f"     Throttle: you {gain_seg['thr_me']:.1f}%, ref {gain_seg['thr_ref']:.1f}%")
         out.append(f"     Brake:    you {gain_seg['br_me']:.1f}%, ref {gain_seg['br_ref']:.1f}%")
 
@@ -608,7 +618,10 @@ class App(tk.Tk):
         for seg in segs:
             out.append(f"\n{seg['name']}")
             out.append(f"     Δtime (s): {seg['delta']:+.3f}")
-            out.append(f"     Speed:     you {seg['speed_me']:.1f}, ref {seg['speed_ref']:.1f}")
+            out.append(
+                f"     Speed (km/h): you {seg['speed_me'] * 3.6:.1f}, "
+                f"ref {seg['speed_ref'] * 3.6:.1f}"
+            )
             out.append(f"     Throttle:  you {seg['thr_me']:.1f}%, ref {seg['thr_ref']:.1f}%")
             out.append(f"     Brake:     you {seg['br_me']:.1f}%, ref {seg['br_ref']:.1f}%")
 

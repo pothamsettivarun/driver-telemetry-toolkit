@@ -444,7 +444,8 @@ def read_ldfile(f_):
     # type: (str) -> (ldHead, list)
     """ Read an ld file, return header and list of channels
     """
-    head_ = ldHead.fromfile(open(f_,'rb'))
+    with open(f_, 'rb') as source:
+        head_ = ldHead.fromfile(source)
     chans = read_channels(f_, head_.meta_ptr)
     return head_, chans
 

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "selection": "Official quickest completed lap from each source session",
+  "track": "Daytona International Speedway road course",
+  "vehicle": "Cadillac V-Series.R GTP",
+  "setup_context": "Same vehicle, track, and setup; separate sessions with different conditions",
+  "privacy": "Each public log contains one anonymized lap. Full sessions are excluded. Both drivers authorized publication of these samples.",
+  "samples": {
+    "author": {
+      "role": "Author",
+      "file": "author_fastest_lap.ld",
+      "source_fastest_completed_lap": 11,
+      "official_lap_time_s": 94.4914048,
+      "samples": 5669,
+      "sample_rate_hz": 60,
+      "lap_length_m": 5685.04637,
+      "completed_laps_in_source_excerpt": 1,
+      "conditions": {
+        "air_temperature_c": 22.546432,
+        "track_temperature_c": 24.4444576
+      }
+    },
+    "reference": {
+      "role": "Reference",
+      "file": "reference_fastest_lap.ld",
+      "source_fastest_completed_lap": 9,
+      "official_lap_time_s": 94.68710399999999,
+      "samples": 5681,
+      "sample_rate_hz": 60,
+      "lap_length_m": 5685.434450000001,
+      "completed_laps_in_source_excerpt": 1,
+      "conditions": {
+        "air_temperature_c": 21.8114304,
+        "track_temperature_c": 22.7777712
+      }
+    }
+  }
+}
