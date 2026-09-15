@@ -130,10 +130,6 @@ tests/                               Lap-detection regression tests
 - embedded interactive GUI plots; and
 - additional tests against varied cars, tracks, sample rates, and channel schemas.
 
-## Windows executable
-
-The repository is intentionally source-first. A Windows executable is not committed because generated binaries add size, obscure the implementation, and become stale. If a no-install build is useful later, publish it as a versioned GitHub Release asset with build instructions and a checksum.
-
 ## License and attribution
 
 This project is distributed under the [GNU General Public License v3.0](LICENSE.txt). It vendors the GPL-3.0 [`ldparser`](https://github.com/gotzl/ldparser) module; see [NOTICE.md](NOTICE.md) for the exact upstream revision and attribution.
